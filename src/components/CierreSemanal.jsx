@@ -25,7 +25,7 @@ const CierreSemanal = () => {
 
   const cerrarSemanaYGuardarHistorial = async () => {
     if (!verificarHorarioCierre()) {
-      setStatus('El cierre semanal solo está disponible después de las 14:00 horas.');
+      setStatus('El cierre semanal solo está disponible después de las 12:00 horas.');
       return;
     }
 
