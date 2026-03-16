@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { getAuth, signInWithEmailAndPassword } from 'firebase/auth';
 import { collection, query, where, getDocs, doc, getDoc } from 'firebase/firestore';
-import { db } from './firebase';
+import { db } from '../firebase';
 import './Login.css';
 
 const Login = () => {
@@ -57,7 +57,7 @@ const Login = () => {
       );
       
       // Verificar rol y redirigir
-      if (userData.rol === "admin") {
+      if (userData.rol === "admin" || userData.rol === "visor") {
         navigate("/admin");
       } else {
         navigate("/menu");

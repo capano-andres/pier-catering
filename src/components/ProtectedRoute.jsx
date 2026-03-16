@@ -1,10 +1,10 @@
 import React, { useState, useEffect } from 'react';
 import { Navigate } from 'react-router-dom';
-import { auth } from './firebase';
+import { auth } from '../firebase';
 import { onAuthStateChanged } from 'firebase/auth';
 import { doc, getDoc, collection, query, where, getDocs } from 'firebase/firestore';
-import { db } from './firebase';
-import Spinner from './components/Spinner';
+import { db } from '../firebase';
+import Spinner from './Spinner';
 
 const ProtectedRoute = ({ children, requireAdmin = false }) => {
   const [user, setUser] = useState(null);
@@ -69,16 +69,17 @@ const ProtectedRoute = ({ children, requireAdmin = false }) => {
     return <Navigate to="/" replace />;
   }
 
-  if (requireAdmin && userRole !== 'admin') {
+  if (requireAdmin && userRole !== 'admin' && userRole !== 'visor') {
     return <Navigate to="/menu" replace />;
   }
 
-  // Si NO requiere admin (rutas de usuario) y el usuario ES admin, redirigir a admin
-  if (!requireAdmin && userRole === 'admin') {
+  // Si NO requiere admin (rutas de usuario) y el usuario ES admin o visor, redirigir a admin
+  if (!requireAdmin && (userRole === 'admin' || userRole === 'visor')) {
     return <Navigate to="/admin" replace />;
   }
 
-  return children;
+  // Pasar userRole a los children para que puedan verificar permisos
+  return React.cloneElement(children, { userRole });
 };
 
 export default ProtectedRoute;

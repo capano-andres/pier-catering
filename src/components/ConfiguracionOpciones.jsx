@@ -77,7 +77,7 @@ const OPCIONES_DEFAULT = {
   Viernes: OPCIONES_MENU.map(op => op.label)
 };
 
-const ConfiguracionOpciones = () => {
+const ConfiguracionOpciones = ({ readOnly = false }) => {
   const [opciones, setOpciones] = useState(OPCIONES_DEFAULT);
   const [isLoading, setIsLoading] = useState(true);
   const [modal, setModal] = useState({ isOpen: false, title: '', message: '', type: 'info' });
@@ -389,14 +389,16 @@ const ConfiguracionOpciones = () => {
         Estas opciones aparecerán en el formulario de pedidos.
       </p>
 
-      <button 
-        className="guardar-btn"
-        onClick={guardarOpciones}
-        disabled={isLoading}
-        style={{ marginBottom: '2rem' }}
-      >
-        {isLoading ? 'Guardando...' : 'Guardar Configuración'}
-      </button>
+      {!readOnly && (
+        <button 
+          className="guardar-btn"
+          onClick={guardarOpciones}
+          disabled={isLoading}
+          style={{ marginBottom: '2rem' }}
+        >
+          {isLoading ? 'Guardando...' : 'Guardar Configuración'}
+        </button>
+      )}
 
       <div className="opciones-grid">
         {DIAS_SEMANA.map(dia => (
@@ -466,36 +468,38 @@ const ConfiguracionOpciones = () => {
                     ) : (
                       <>
                         <span>{opcion}</span>
-                        <div className="opcion-buttons">
-                          <button 
-                            className="editar-btn"
-                            onClick={() => iniciarEdicion(dia, index, opcion)}
-                            title={opcion.trim().toUpperCase().includes('NO PEDIR') ? "Esta opción no se puede editar" : "Editar esta opción"}
-                            disabled={opcion.trim().toUpperCase().includes('NO PEDIR')}
-                            style={{
-                              background: opcion.trim().toUpperCase().includes('NO PEDIR') ? '#9ca3af' : '#3b82f6',
-                              color: 'white',
-                              border: 'none',
-                              borderRadius: '4px',
-                              padding: '0.2rem 0.4rem',
-                              marginRight: '0.3rem',
-                              cursor: opcion.trim().toUpperCase().includes('NO PEDIR') ? 'not-allowed' : 'pointer',
-                              fontSize: '0.7rem',
-                              opacity: opcion.trim().toUpperCase().includes('NO PEDIR') ? 0.5 : 1
-                            }}
-                          >
-                            ✎
-                          </button>
-                          <button 
-                            className="eliminar-btn"
-                            onClick={() => eliminarOpcion(dia, opcion)}
-                            title={opcion === "NO PEDIR" ? "Esta opción no se puede eliminar" : "Eliminar esta opción"}
-                            disabled={opcion === "NO PEDIR"}
-                            style={opcion === "NO PEDIR" ? { opacity: 0.5, cursor: 'not-allowed' } : {}}
-                          >
-                            ×
-                          </button>
-                        </div>
+                        {!readOnly && (
+                          <div className="opcion-buttons">
+                            <button 
+                              className="editar-btn"
+                              onClick={() => iniciarEdicion(dia, index, opcion)}
+                              title={opcion.trim().toUpperCase().includes('NO PEDIR') ? "Esta opción no se puede editar" : "Editar esta opción"}
+                              disabled={opcion.trim().toUpperCase().includes('NO PEDIR')}
+                              style={{
+                                background: opcion.trim().toUpperCase().includes('NO PEDIR') ? '#9ca3af' : '#3b82f6',
+                                color: 'white',
+                                border: 'none',
+                                borderRadius: '4px',
+                                padding: '0.2rem 0.4rem',
+                                marginRight: '0.3rem',
+                                cursor: opcion.trim().toUpperCase().includes('NO PEDIR') ? 'not-allowed' : 'pointer',
+                                fontSize: '0.7rem',
+                                opacity: opcion.trim().toUpperCase().includes('NO PEDIR') ? 0.5 : 1
+                              }}
+                            >
+                              ✎
+                            </button>
+                            <button 
+                              className="eliminar-btn"
+                              onClick={() => eliminarOpcion(dia, opcion)}
+                              title={opcion === "NO PEDIR" ? "Esta opción no se puede eliminar" : "Eliminar esta opción"}
+                              disabled={opcion === "NO PEDIR"}
+                              style={opcion === "NO PEDIR" ? { opacity: 0.5, cursor: 'not-allowed' } : {}}
+                            >
+                              ×
+                            </button>
+                          </div>
+                        )}
                       </>
                     )}
                   </div>
@@ -503,23 +507,25 @@ const ConfiguracionOpciones = () => {
               </div>
             </div>
 
-            <div className="agregar-opcion">
-              <h4>Agregar Nueva Opción</h4>
-              <div className="input-group">
-                <input
-                  type="text"
-                  value={nuevaOpcion[dia]}
-                  onChange={(e) => handleNuevaOpcion(dia, e.target.value)}
-                  placeholder="Nueva opción..."
-                />
-                <button 
-                  className="agregar-btn"
-                  onClick={() => agregarOpcion(dia)}
-                >
-                  Agregar
-                </button>
+            {!readOnly && (
+              <div className="agregar-opcion">
+                <h4>Agregar Nueva Opción</h4>
+                <div className="input-group">
+                  <input
+                    type="text"
+                    value={nuevaOpcion[dia]}
+                    onChange={(e) => handleNuevaOpcion(dia, e.target.value)}
+                    placeholder="Nueva opción..."
+                  />
+                  <button 
+                    className="agregar-btn"
+                    onClick={() => agregarOpcion(dia)}
+                  >
+                    Agregar
+                  </button>
+                </div>
               </div>
-            </div>
+            )}
           </div>
         ))}
       </div>

@@ -6,7 +6,7 @@ import Spinner from './Spinner';
 import './HistorialPedidos.css';
 import * as XLSX from 'xlsx';
 
-const HistorialPedidos = () => {
+const HistorialPedidos = ({ readOnly = false }) => {
   const [usuarios, setUsuarios] = useState([]); // [{uid, nombre, email, pedidos: []}]
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
@@ -659,10 +659,12 @@ const HistorialPedidos = () => {
                     <div className="pedido-footer">
                       <span className="precio-total">Total: ${pedido.precioTotal || 0}</span>
                     </div>
-                    <div style={{marginTop: '1rem', display: 'flex', gap: '0.5rem'}}>
-                      <button className="ver-historial-btn" onClick={() => handleEditarPedido(pedido, 'historial')}>Modificar en historial</button>
-                      <button className="ver-historial-btn" style={{background:'#b22222'}} onClick={() => handleEliminarPedidoHistorial(pedido.id)}>Eliminar del historial</button>
-                    </div>
+                    {!readOnly && (
+                      <div style={{marginTop: '1rem', display: 'flex', gap: '0.5rem'}}>
+                        <button className="ver-historial-btn" onClick={() => handleEditarPedido(pedido, 'historial')}>Modificar en historial</button>
+                        <button className="ver-historial-btn" style={{background:'#b22222'}} onClick={() => handleEliminarPedidoHistorial(pedido.id)}>Eliminar del historial</button>
+                      </div>
+                    )}
                   </div>
                 ))}
               </div>
@@ -670,7 +672,7 @@ const HistorialPedidos = () => {
           </div>
         )}
         {/* Modal de edición */}
-        {editandoPedido && (
+        {editandoPedido && !readOnly && (
           <div className="editar-pedido-modal" ref={editFormRef}>
             <h4>Editar pedido ({editandoPedido.modo === 'historial' ? 'Historial' : 'Pedido Actual'})</h4>
             <form onSubmit={e => {e.preventDefault(); handleGuardarEdicion();}} style={{display:'flex', flexDirection:'column', gap:'0.5rem'}}>

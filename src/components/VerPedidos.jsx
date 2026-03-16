@@ -8,7 +8,7 @@ import VerPedidosTardios from './VerPedidosTardios';
 import VerPedidosProximaSemana from './VerPedidosProximaSemana';
 import './VerPedidos.css';
 
-const VerPedidos = ({ tipo = 'actual' }) => {
+const VerPedidos = ({ tipo = 'actual', readOnly = false }) => {
   // Si el tipo es 'tardio', renderizar el componente VerPedidosTardios
   if (tipo === 'tardio') {
     return <VerPedidosTardios />;
@@ -16,7 +16,7 @@ const VerPedidos = ({ tipo = 'actual' }) => {
 
   // Si el tipo es 'proxima', renderizar el componente VerPedidosProximaSemana
   if (tipo === 'proxima') {
-    return <VerPedidosProximaSemana />;
+    return <VerPedidosProximaSemana readOnly={readOnly} />;
   }
 
   const [pedidos, setPedidos] = useState([]);
@@ -966,7 +966,7 @@ const VerPedidos = ({ tipo = 'actual' }) => {
           </thead>
           <tbody>
             {pedidosFiltrados.map((usuario) => (
-              <tr key={usuario.id} className={usuario.tienePedido ? 'clickable-row' : 'sin-pedido clickable-row'} onClick={() => handleRowClick(usuario)}>
+              <tr key={usuario.id} className={usuario.tienePedido ? (readOnly ? '' : 'clickable-row') : (readOnly ? 'sin-pedido' : 'sin-pedido clickable-row')} onClick={() => !readOnly && handleRowClick(usuario)}>
                 <td>{usuario.nombre}</td>
                 <td>{usuario.fecha ? formatearFecha(usuario.fecha) : ''}</td>
                 {diasSemana.map(dia => {

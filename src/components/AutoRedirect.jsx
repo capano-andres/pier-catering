@@ -71,7 +71,7 @@ const AutoRedirect = () => {
   }
 
   // Si hay usuario autenticado, redirigir según su rol
-  if (userRole === 'admin') {
+  if (userRole === 'admin' || userRole === 'visor') {
     return <Navigate to="/admin" replace />;
   } else {
     return <Navigate to="/menu" replace />;

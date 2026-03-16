@@ -1,12 +1,12 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { db } from '../firebase';
-import { doc, getDoc, deleteDoc } from 'firebase/firestore';
+import { doc, getDoc, deleteDoc, setDoc } from 'firebase/firestore';
 import Modal from './Modal';
 import Spinner from './Spinner';
 import jsPDF from 'jspdf';
 import './AdminMenu.css';
 
-const AdminMenu = ({ onMenuDeleted, tipo = 'actual' }) => {
+const AdminMenu = ({ onMenuDeleted, tipo = 'actual', readOnly = false }) => {
   const [menuData, setMenuData] = useState(null);
   const [menuStructure, setMenuStructure] = useState(null);
   const [loading, setLoading] = useState(true);
@@ -14,6 +14,10 @@ const AdminMenu = ({ onMenuDeleted, tipo = 'actual' }) => {
   const [isDeleting, setIsDeleting] = useState(false);
   const [isGeneratingPDF, setIsGeneratingPDF] = useState(false);
   const [modal, setModal] = useState({ isOpen: false, title: '', message: '', type: 'info' });
+  const [editingField, setEditingField] = useState(null); // { dia, campo, subCampo? }
+  const [editValue, setEditValue] = useState('');
+  const [isSaving, setIsSaving] = useState(false);
+  const inputRef = useRef(null);
 
   useEffect(() => {
     cargarMenu();
@@ -93,6 +97,117 @@ const AdminMenu = ({ onMenuDeleted, tipo = 'actual' }) => {
     } finally {
       setIsDeleting(false);
     }
+  };
+
+  const startEditing = (dia, campo, currentValue, subCampo = null) => {
+    if (readOnly) return;
+    setEditingField({ dia, campo, subCampo });
+    setEditValue(currentValue || '');
+    setTimeout(() => inputRef.current?.focus(), 50);
+  };
+
+  const cancelEditing = () => {
+    setEditingField(null);
+    setEditValue('');
+  };
+
+  const handleSaveField = async () => {
+    if (!editingField || isSaving) return;
+    const { dia, campo, subCampo } = editingField;
+
+    const updatedDias = { ...menuData.dias };
+    const updatedDia = { ...updatedDias[dia] };
+
+    if (subCampo) {
+      updatedDia[campo] = { ...updatedDia[campo], [subCampo]: editValue };
+    } else {
+      updatedDia[campo] = editValue;
+    }
+    updatedDias[dia] = updatedDia;
+
+    setIsSaving(true);
+    try {
+      const menuDocId = tipo === 'actual' ? 'menuActual' : 'menuProxima';
+      await setDoc(doc(db, 'menus', menuDocId), { dias: updatedDias }, { merge: true });
+      setMenuData(prev => ({ ...prev, dias: updatedDias }));
+      setEditingField(null);
+      setEditValue('');
+    } catch (error) {
+      console.error('Error al guardar el campo:', error);
+      setModal({
+        isOpen: true,
+        title: 'Error',
+        message: 'Error al guardar el cambio. Por favor, intenta nuevamente.',
+        type: 'error'
+      });
+    } finally {
+      setIsSaving(false);
+    }
+  };
+
+  const handleEditKeyDown = (e) => {
+    if (e.key === 'Enter' && !e.shiftKey) {
+      e.preventDefault();
+      handleSaveField();
+    } else if (e.key === 'Escape') {
+      cancelEditing();
+    }
+  };
+
+  const isEditing = (dia, campo, subCampo = null) => {
+    if (!editingField) return false;
+    return editingField.dia === dia && editingField.campo === campo && editingField.subCampo === subCampo;
+  };
+
+  const renderEditableField = (dia, campo, value, subCampo = null) => {
+    if (isEditing(dia, campo, subCampo)) {
+      return (
+        <div className="menu-edit-wrapper">
+          <input
+            ref={inputRef}
+            className="menu-edit-input"
+            type="text"
+            value={editValue}
+            onChange={(e) => setEditValue(e.target.value)}
+            onKeyDown={handleEditKeyDown}
+            disabled={isSaving}
+          />
+          <div className="menu-edit-actions">
+            <button
+              className="menu-edit-btn save"
+              onClick={handleSaveField}
+              disabled={isSaving}
+              title="Guardar (Enter)"
+            >
+              ✓
+            </button>
+            <button
+              className="menu-edit-btn cancel"
+              onClick={cancelEditing}
+              disabled={isSaving}
+              title="Cancelar (Escape)"
+            >
+              ✗
+            </button>
+          </div>
+        </div>
+      );
+    }
+
+    if (readOnly) {
+      return <p>{value}</p>;
+    }
+
+    return (
+      <p
+        className="menu-item-editable"
+        onClick={() => startEditing(dia, campo, value, subCampo)}
+        title="Click para editar"
+      >
+        {value}
+        <span className="edit-hint">✏️</span>
+      </p>
+    );
   };
 
   const generarPDF = () => {
@@ -283,7 +398,7 @@ const AdminMenu = ({ onMenuDeleted, tipo = 'actual' }) => {
               return (
                 <div key={opcion} className="menu-item">
                   <h4>{opcion}</h4>
-                  <p>{diaData[opcionKey]}</p>
+                  {renderEditableField(dia, opcionKey, diaData[opcionKey])}
                 </div>
               );
             }
@@ -294,21 +409,21 @@ const AdminMenu = ({ onMenuDeleted, tipo = 'actual' }) => {
         {diaData.sandwichMiga?.tipo && (
           <div className="sandwich-miga">
             <h4>Sandwich de Miga</h4>
-            <p>{diaData.sandwichMiga.tipo} ({diaData.sandwichMiga.cantidad} triángulos)</p>
+            {renderEditableField(dia, 'sandwichMiga', diaData.sandwichMiga.tipo, 'tipo')}
           </div>
         )}
 
         {diaData.ensaladas?.ensalada1 && (
           <div className="ensalada">
             <h4>Ensalada</h4>
-            <p>{diaData.ensaladas.ensalada1}</p>
+            {renderEditableField(dia, 'ensaladas', diaData.ensaladas.ensalada1, 'ensalada1')}
           </div>
         )}
 
         {diaData.postre && (
           <div className="postre">
             <h4>Postre</h4>
-            <p>{diaData.postre}</p>
+            {renderEditableField(dia, 'postre', diaData.postre)}
           </div>
         )}
       </div>
@@ -357,18 +472,20 @@ const AdminMenu = ({ onMenuDeleted, tipo = 'actual' }) => {
             className="download-button"
             onClick={generarPDF}
             disabled={isGeneratingPDF}
-            style={{width: '50%'}}
+            style={{width: readOnly ? '100%' : '50%'}}
           >
             {isGeneratingPDF ? 'Generando...' : '📄 Descargar PDF'}
           </button>
-          <button 
-            className="delete-button"
-            onClick={handleEliminarMenu}
-            disabled={isDeleting}
-            style={{width: '50%'}}
-          >
-            {isDeleting ? 'Eliminando...' : '🗑️ Eliminar Menú'}
-          </button>
+          {!readOnly && (
+            <button 
+              className="delete-button"
+              onClick={handleEliminarMenu}
+              disabled={isDeleting}
+              style={{width: '50%'}}
+            >
+              {isDeleting ? 'Eliminando...' : '🗑️ Eliminar Menú'}
+            </button>
+          )}
         </div>
       </div>
 

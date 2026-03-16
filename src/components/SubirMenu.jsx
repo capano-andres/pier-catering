@@ -1,9 +1,9 @@
 import React, { useState, useRef, useEffect } from 'react';
-import { db } from './firebase';
+import { db } from '../firebase';
 import { collection, addDoc, serverTimestamp, doc, setDoc, getDoc } from 'firebase/firestore';
 import * as pdfjsLib from 'pdfjs-dist';
-import Modal from './components/Modal';
-import Spinner from './components/Spinner';
+import Modal from './Modal';
+import Spinner from './Spinner';
 import './SubirMenu.css';
 
 // Configurar el worker de PDF.js

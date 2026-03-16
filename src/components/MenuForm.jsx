@@ -1,8 +1,8 @@
 import React, { useState, useEffect } from 'react';
-import { db } from './firebase';
+import { db } from '../firebase';
 import { collection, addDoc, getDocs, query, where, orderBy } from 'firebase/firestore';
-import Modal from './components/Modal';
-import Spinner from './components/Spinner';
+import Modal from './Modal';
+import Spinner from './Spinner';
 import './MenuForm.css';
 
 const MenuForm = () => {

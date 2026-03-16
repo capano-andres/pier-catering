@@ -1,22 +1,23 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { auth } from './firebase';
+import { auth } from '../firebase';
 import { signOut } from 'firebase/auth';
 import AdminUsers from './AdminUsers';
 import MenuForm from './MenuForm';
 import SubirMenu from './SubirMenu';
-import AdminMenu from './components/AdminMenu';
-import MenuStructureManager from './components/MenuStructureManager';
-import VerPedidos from './components/VerPedidos';
-import HistorialPedidos from './components/HistorialPedidos';
-import PrecioMenu from './components/PrecioMenu';
-import CierreSemanal from './components/CierreSemanal';
-import Modal from './components/Modal';
+import AdminMenu from './AdminMenu';
+import MenuStructureManager from './MenuStructureManager';
+import VerPedidos from './VerPedidos';
+import HistorialPedidos from './HistorialPedidos';
+import PrecioMenu from './PrecioMenu';
+import CierreSemanal from './CierreSemanal';
+import Modal from './Modal';
 import { getFirestore, collection, query, where, getDocs, setDoc, doc, deleteDoc, getDoc, addDoc, Timestamp } from 'firebase/firestore';
-import ConfiguracionOpciones from './components/ConfiguracionOpciones';
+import ConfiguracionOpciones from './ConfiguracionOpciones';
 import './AdminDashboard.css';
 
-const AdminDashboard = () => {
+const AdminDashboard = ({ userRole }) => {
+  const isVisor = userRole === 'visor';
   const [activeSection, setActiveSection] = useState('dashboard');
   const navigate = useNavigate();
   const backButtonRef = useRef(null);
@@ -364,25 +365,25 @@ const AdminDashboard = () => {
       case 'menu':
         return <MenuForm />;
       case 'verMenu':
-        return <AdminMenu onMenuDeleted={() => setActiveSection('dashboard')} tipo="actual" />;
+        return <AdminMenu onMenuDeleted={() => setActiveSection('dashboard')} tipo="actual" readOnly={isVisor} />;
       case 'verMenuProxima':
-        return <AdminMenu onMenuDeleted={() => setActiveSection('dashboard')} tipo="proxima" />;
+        return <AdminMenu onMenuDeleted={() => setActiveSection('dashboard')} tipo="proxima" readOnly={isVisor} />;
       case 'usuarios':
         return <AdminUsers mode="view" />;
       case 'pedidosActual':
-        return <VerPedidos tipo="actual" />;
+        return <VerPedidos tipo="actual" readOnly={isVisor} />;
       case 'pedidosProxima':
-        return <VerPedidos tipo="proxima" />;
+        return <VerPedidos tipo="proxima" readOnly={isVisor} />;
       case 'pedidosTardios':
-        return <VerPedidos tipo="tardio" />;
+        return <VerPedidos tipo="tardio" readOnly={isVisor} />;
       case 'historial':
-        return <HistorialPedidos />;
+        return <HistorialPedidos readOnly={isVisor} />;
       case 'estructuraMenu':
-        return <MenuStructureManager />;
+        return <MenuStructureManager readOnly={isVisor} />;
       case 'precioMenu':
-        return <PrecioMenu />;
+        return <PrecioMenu readOnly={isVisor} />;
       case 'configuracionOpciones':
-        return <ConfiguracionOpciones />;
+        return <ConfiguracionOpciones readOnly={isVisor} />;
       default:
         return null;
     }
@@ -406,10 +407,12 @@ const AdminDashboard = () => {
             <span className="button-icon">📋 </span>
             Menú Semana Actual
           </button>
-          <button className="admin-button" style={{backgroundColor:'#4f4f4f'}} onClick={handleEditarMenu}>
-            <span className="button-icon">📝</span>
-            Subir Menú / Editar Menú
-          </button>
+          {!isVisor && (
+            <button className="admin-button" style={{backgroundColor:'#4f4f4f'}} onClick={handleEditarMenu}>
+              <span className="button-icon">📝</span>
+              Subir Menú / Editar Menú
+            </button>
+          )}
           <button className="admin-button" style={{backgroundColor:'#3156bc'}} onClick={handleVerMenuProxima}>
             <span className="button-icon">📋 </span>
             Menú Próxima Semana
@@ -442,14 +445,18 @@ const AdminDashboard = () => {
             <span className="button-icon">📋⏰</span>
             Pedidos Tarde
           </button> */}
-          <button className="admin-button special" style={{backgroundColor:'#282a30'}} onClick={handleCierreSemanal}>
-            <span className="button-icon">📊</span>
-            Cierre Semanal
-          </button>
-          <button className="admin-button" style={{backgroundColor:'#4f4f4f'}} onClick={()=>setModalFechaInicio(true)}>
-            <span className="button-icon">🗓️</span>
-            Configurar Fechas
-          </button>
+          {!isVisor && (
+            <>
+              <button className="admin-button special" style={{backgroundColor:'#282a30'}} onClick={handleCierreSemanal}>
+                <span className="button-icon">📊</span>
+                Cierre Semanal
+              </button>
+              <button className="admin-button" style={{backgroundColor:'#4f4f4f'}} onClick={()=>setModalFechaInicio(true)}>
+                <span className="button-icon">🗓️</span>
+                Configurar Fechas
+              </button>
+            </>
+          )}
           <button className="admin-button" style={{backgroundColor:'#11b709'}} onClick={() => setActiveSection('precioMenu')}>
             <span className="button-icon">💰</span>
             Configurar Precio Menú

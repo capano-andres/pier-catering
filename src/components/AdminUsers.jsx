@@ -1,9 +1,9 @@
 import React, { useState, useEffect } from 'react';
 import { collection, getDocs, doc, setDoc, deleteDoc, serverTimestamp, query, where } from "firebase/firestore";
-import { db, secondaryAuth } from "./firebase";
+import { db, secondaryAuth } from "../firebase";
 import { getAuth, createUserWithEmailAndPassword, deleteUser, signInWithEmailAndPassword } from "firebase/auth";
-import Modal from './components/Modal';
-import Spinner from './components/Spinner';
+import Modal from './Modal';
+import Spinner from './Spinner';
 import "./AdminUsers.css";
 
 // Flag global para pausar listeners durante creación de usuarios
@@ -31,6 +31,9 @@ const AdminUsers = ({ mode = "view" }) => {
   const [isEditingUser, setIsEditingUser] = useState(false);
   const [editingUserId, setEditingUserId] = useState(null);
   const [showCreatePassword, setShowCreatePassword] = useState(false);
+  const [editingUsername, setEditingUsername] = useState(null); // userId being edited
+  const [editUsernameValue, setEditUsernameValue] = useState('');
+  const [isSavingUsername, setIsSavingUsername] = useState(false);
   
   useEffect(() => {
     fetchUsers();
@@ -268,6 +271,72 @@ const AdminUsers = ({ mode = "view" }) => {
     }
   };
 
+  const handleStartEditUsername = (userId, currentUsername) => {
+    setEditingUsername(userId);
+    setEditUsernameValue(currentUsername || '');
+  };
+
+  const handleCancelEditUsername = () => {
+    setEditingUsername(null);
+    setEditUsernameValue('');
+  };
+
+  const handleSaveUsername = async (userId) => {
+    if (!editUsernameValue.trim()) {
+      setModal({
+        isOpen: true,
+        title: 'Error',
+        message: 'El nombre de usuario no puede estar vacío.',
+        type: 'error'
+      });
+      return;
+    }
+
+    setIsSavingUsername(true);
+    try {
+      // Validate uniqueness
+      const usersRef = collection(db, "users");
+      const usuarioQuery = query(usersRef, where("usuario", "==", editUsernameValue.trim()));
+      const usuarioSnapshot = await getDocs(usuarioQuery);
+      
+      const existeOtro = usuarioSnapshot.docs.some(d => d.id !== userId);
+      if (existeOtro) {
+        setModal({
+          isOpen: true,
+          title: 'Error',
+          message: 'El nombre de usuario ya existe. Por favor, usa uno diferente.',
+          type: 'error'
+        });
+        return;
+      }
+
+      await setDoc(doc(db, "users", userId), {
+        usuario: editUsernameValue.trim()
+      }, { merge: true });
+
+      setModal({
+        isOpen: true,
+        title: 'Éxito',
+        message: 'Nombre de usuario actualizado correctamente.',
+        type: 'success'
+      });
+
+      setEditingUsername(null);
+      setEditUsernameValue('');
+      fetchUsers();
+    } catch (error) {
+      console.error('Error al actualizar usuario:', error);
+      setModal({
+        isOpen: true,
+        title: 'Error',
+        message: 'Error al actualizar el nombre de usuario: ' + error.message,
+        type: 'error'
+      });
+    } finally {
+      setIsSavingUsername(false);
+    }
+  };
+
   const renderUsersList = () => (
     <div className="users-list">
       <div className="users-header">
@@ -288,7 +357,57 @@ const AdminUsers = ({ mode = "view" }) => {
             <div key={user.id} className="user-card">
               <div className="user-info">
                 {/*<p><strong>ID:</strong> {user.id}</p>*/}
-                <p><strong>Usuario:</strong> {user.usuario || "No definido"}</p>
+                <p>
+                  <strong>Usuario:</strong>{' '}
+                  {editingUsername === user.id ? (
+                    <span style={{ display: 'inline-flex', alignItems: 'center', gap: '4px' }}>
+                      <input
+                        type="text"
+                        value={editUsernameValue}
+                        onChange={(e) => setEditUsernameValue(e.target.value)}
+                        onKeyDown={(e) => {
+                          if (e.key === 'Enter') handleSaveUsername(user.id);
+                          if (e.key === 'Escape') handleCancelEditUsername();
+                        }}
+                        disabled={isSavingUsername}
+                        autoFocus
+                        style={{
+                          padding: '2px 6px',
+                          border: '2px solid #FFA000',
+                          borderRadius: '4px',
+                          backgroundColor: '#111',
+                          color: '#fff',
+                          fontSize: '0.95em',
+                          width: '140px'
+                        }}
+                      />
+                      <button
+                        onClick={() => handleSaveUsername(user.id)}
+                        disabled={isSavingUsername}
+                        style={{ background: '#28a745', color: 'white', border: 'none', borderRadius: '4px', padding: '2px 6px', cursor: 'pointer', fontSize: '1em' }}
+                        title="Guardar (Enter)"
+                      >
+                        ✓
+                      </button>
+                      <button
+                        onClick={handleCancelEditUsername}
+                        disabled={isSavingUsername}
+                        style={{ background: '#dc3545', color: 'white', border: 'none', borderRadius: '4px', padding: '2px 6px', cursor: 'pointer', fontSize: '1em' }}
+                        title="Cancelar (Escape)"
+                      >
+                        ✗
+                      </button>
+                    </span>
+                  ) : (
+                    <span
+                      onClick={() => handleStartEditUsername(user.id, user.usuario)}
+                      style={{ cursor: 'pointer', borderBottom: '1px dashed #FFA000' }}
+                      title="Click para editar"
+                    >
+                      {user.usuario || "No definido"} ✏️
+                    </span>
+                  )}
+                </p>
                 <p><strong>Email:</strong> {user.email}</p>
                 <p><strong>Legajo:</strong> {user.legajo || "No asignado"}</p>
                 <p><strong>Nombre:</strong> {user.nombre || "Sin nombre"}</p>

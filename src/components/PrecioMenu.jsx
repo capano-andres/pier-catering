@@ -4,7 +4,7 @@ import { doc, getDoc, setDoc } from 'firebase/firestore';
 import Modal from './Modal';
 import './PrecioMenu.css';
 
-const PrecioMenu = () => {
+const PrecioMenu = ({ readOnly = false }) => {
   const [precios, setPrecios] = useState({
     precio: '',
     porcentajeBonificacion: '',
@@ -167,6 +167,7 @@ const PrecioMenu = () => {
             onChange={handleChange}
             min="0"
             step="100"
+            disabled={readOnly}
           />
         </div>
         
@@ -181,6 +182,7 @@ const PrecioMenu = () => {
             min="0"
             max="100"
             step="0.1"
+            disabled={readOnly}
           />
         </div>
 
@@ -194,6 +196,7 @@ const PrecioMenu = () => {
             onChange={handleChange}
             min="0"
             step="100"
+            disabled={readOnly}
           />
         </div>
         
@@ -212,12 +215,14 @@ const PrecioMenu = () => {
           <p>• Precio final bonificado: ${calcularPrecioBonificado()}</p>
         </div>
         
-        <button 
-          className="guardar-precio-btn"
-          onClick={handleGuardarPrecios}
-        >
-          Guardar Precios
-        </button>
+        {!readOnly && (
+          <button 
+            className="guardar-precio-btn"
+            onClick={handleGuardarPrecios}
+          >
+            Guardar Precios
+          </button>
+        )}
       </div>
       <div className="precio-info" style={{
         marginTop: '20px',

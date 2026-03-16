@@ -3,8 +3,8 @@ import React, { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { getAuth, signOut } from "firebase/auth";
 import { getFirestore, doc, getDoc, setDoc, collection, query, orderBy, limit, getDocs, where, deleteDoc, addDoc, serverTimestamp } from "firebase/firestore";
-import Modal from './components/Modal';
-import Spinner from './components/Spinner';
+import Modal from './Modal';
+import Spinner from './Spinner';
 import "./Formulario.css";
 
 const diasSemana = ['domingo', 'lunes', 'martes', 'miercoles', 'jueves', 'viernes', 'sabado'];

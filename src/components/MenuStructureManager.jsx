@@ -5,7 +5,7 @@ import Modal from './Modal';
 import Spinner from './Spinner';
 import './MenuStructureManager.css';
 
-const MenuStructureManager = () => {
+const MenuStructureManager = ({ readOnly = false }) => {
   const [menuStructure, setMenuStructure] = useState({
     opciones: []
   });
@@ -158,34 +158,40 @@ const MenuStructureManager = () => {
           {menuStructure.opciones.map((opcion, index) => (
             <div key={index} className="option-item">
               <span>{opcion}</span>
-              <button 
-                className="delete-option" 
-                onClick={() => eliminarOpcion(opcion)}
-              >
-                🗑️
-              </button>
+              {!readOnly && (
+                <button 
+                  className="delete-option" 
+                  onClick={() => eliminarOpcion(opcion)}
+                >
+                  🗑️
+                </button>
+              )}
             </div>
           ))}
         </div>
         
-        <div className="add-option">
-          <input
-            type="text"
-            value={newOption}
-            onChange={(e) => setNewOption(e.target.value)}
-            placeholder="Nueva opción..."
-          />
-          <button onClick={agregarOpcion}>Agregar</button>
-        </div>
+        {!readOnly && (
+          <div className="add-option">
+            <input
+              type="text"
+              value={newOption}
+              onChange={(e) => setNewOption(e.target.value)}
+              placeholder="Nueva opción..."
+            />
+            <button onClick={agregarOpcion}>Agregar</button>
+          </div>
+        )}
       </div>
 
-      <button 
-        className="save-button"
-        onClick={guardarEstructura}
-        disabled={loading}
-      >
-        {loading ? 'Guardando...' : 'Guardar Cambios'}
-      </button>
+      {!readOnly && (
+        <button 
+          className="save-button"
+          onClick={guardarEstructura}
+          disabled={loading}
+        >
+          {loading ? 'Guardando...' : 'Guardar Cambios'}
+        </button>
+      )}
     </div>
   );
 };
